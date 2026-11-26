@@ -1,0 +1,85 @@
+"use client";
+
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { getProduct, type Product } from "@/lib/data";
+
+export interface CartLine {
+  productId: string;
+  color: string;
+  qty: number;
+}
+
+interface CartCtx {
+  lines: (CartLine & { product: Product })[];
+  count: number;
+  subtotal: number;
+  add: (productId: string, color: string) => void;
+  setQty: (productId: string, color: string, qty: number) => void;
+  remove: (productId: string, color: string) => void;
+  wishlist: string[];
+  toggleWish: (productId: string) => void;
+}
+
+const Ctx = createContext<CartCtx | null>(null);
+
+// 데모를 위해 첫 방문 시 쇼핑백에 3개 상품을 담아 둡니다.
+const SEED: CartLine[] = [
+  { productId: "p001", color: "블랙", qty: 1 },
+  { productId: "p013", color: "블랙", qty: 1 },
+  { productId: "p017", color: "아이보리", qty: 1 },
+];
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [lines, setLines] = useState<CartLine[]>(SEED);
+  const [wishlist, setWishlist] = useState<string[]>(["p016", "p014", "p018"]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("vellanti-cart");
+      if (saved) setLines(JSON.parse(saved));
+      const wish = localStorage.getItem("vellanti-wish");
+      if (wish) setWishlist(JSON.parse(wish));
+    } catch {}
+  }, []);
+
+  const persist = useCallback((next: CartLine[]) => {
+    setLines(next);
+    try {
+      localStorage.setItem("vellanti-cart", JSON.stringify(next));
+    } catch {}
+  }, []);
+
+  const value = useMemo<CartCtx>(() => {
+    const full = lines
+      .map((l) => ({ ...l, product: getProduct(l.productId)! }))
+      .filter((l) => l.product);
+    return {
+      lines: full,
+      count: full.reduce((s, l) => s + l.qty, 0),
+      subtotal: full.reduce((s, l) => s + l.qty * l.product.price, 0),
+      add: (productId, color) => {
+        const hit = lines.find((l) => l.productId === productId && l.color === color);
+        persist(hit ? lines.map((l) => (l === hit ? { ...l, qty: l.qty + 1 } : l)) : [...lines, { productId, color, qty: 1 }]);
+      },
+      setQty: (productId, color, qty) =>
+        persist(lines.map((l) => (l.productId === productId && l.color === color ? { ...l, qty: Math.max(1, Math.min(9, qty)) } : l))),
+      remove: (productId, color) => persist(lines.filter((l) => !(l.productId === productId && l.color === color))),
+      wishlist,
+      toggleWish: (productId) => {
+        const next = wishlist.includes(productId) ? wishlist.filter((id) => id !== productId) : [...wishlist, productId];
+        setWishlist(next);
+        try {
+          localStorage.setItem("vellanti-wish", JSON.stringify(next));
+        } catch {}
+      },
+    };
+  }, [lines, wishlist, persist]);
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+export function useCart() {
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error("useCart must be used inside <CartProvider>");
+  return ctx;
+}

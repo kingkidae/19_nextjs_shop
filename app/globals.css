@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * VELLANTI 디자인 토큰 — Figma "00 Foundations"의 Color 변수 / 텍스트 스타일과 1:1 대응
+ */
+@theme {
+  --color-canvas: #ffffff;
+  --color-subtle: #f4f4f4;
+  --color-muted: #ebebeb;
+  --color-ink: #000000;
+  --color-ink-2: #767676;
+  --color-ink-3: #a3a3a3;
+  --color-line: #e0e0e0;
+  --color-admin-bg: #f6f6f4;
+  --color-admin-side: #111111;
+  --color-brand-green: #1f3a2e;
+  --color-brand-red: #9e1b1f;
+  --color-success: #2f6b4a;
+  --color-success-bg: #e6f0ea;
+  --color-warning: #9a6412;
+  --color-warning-bg: #f7eedc;
+  --color-danger: #b3261e;
+  --color-danger-bg: #f9e4e2;
+  --color-info: #2f4f7f;
+  --color-info-bg: #e5ebf4;
+
+  --font-sans: var(--font-noto), "Noto Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --font-logo: var(--font-bodoni), "Bodoni Moda", "Didot", serif;
+
+  --breakpoint-xs: 420px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  button {
+    cursor: pointer;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* 대문자 볼드 12px CTA (Figma: Label/CTA) */
+@utility cta {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+/* 섹션 제목 (Figma: Heading/H2) */
+@utility h2 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.45;
+}
+
+@utility logo {
+  font-family: var(--font-logo);
+  letter-spacing: 0.12em;
+  font-weight: 400;
+  line-height: 1;
+}
+
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
