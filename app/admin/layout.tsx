@@ -9,11 +9,32 @@ export const metadata: Metadata = { title: { default: "관리자", template: "%s
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AdminShell>
+    <AdminShell
+      profile={
+        <Suspense fallback={<span className="size-8 rounded-full bg-muted" />}>
+          <AdminProfile />
+        </Suspense>
+      }
+    >
       <Suspense fallback={<p className="py-20 text-center text-[13px] text-ink-2">불러오는 중…</p>}>
         <AdminGate>{children}</AdminGate>
       </Suspense>
     </AdminShell>
+  );
+}
+
+async function AdminProfile() {
+  const { user, admin } = await getAdmin();
+  if (!admin) return null;
+  const name = admin.name || user?.email || "관리자";
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="grid size-8 place-items-center rounded-full bg-brand-green text-[12px] font-bold text-canvas">{name[0]}</span>
+      <span className="hidden flex-col leading-tight sm:flex">
+        <span className="text-[13px] font-medium">{name}</span>
+        <span className="text-[11px] text-ink-2">관리자</span>
+      </span>
+    </div>
   );
 }
 

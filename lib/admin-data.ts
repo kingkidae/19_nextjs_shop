@@ -19,10 +19,10 @@ export async function adminOrders() {
 export async function adminProfiles() {
   const { data, error } = await (await createClient())
     .from("profiles")
-    .select("uid:id, id:member_no, name, email, phone, grade, marketing, advisor, createdAt:created_at, lastVisit:last_visit")
+    .select("uid:id, id:member_no, name, email, phone, grade, role, marketing, advisor, createdAt:created_at, lastVisit:last_visit")
     .order("created_at");
   if (error) throw new Error(error.message);
-  return data as unknown as { uid: string; id: string; name: string; email: string; phone: string; grade: "VIP" | "GOLD" | "MEMBER"; marketing: boolean; advisor: string | null; createdAt: string; lastVisit: string }[];
+  return data as unknown as { uid: string; id: string; name: string; email: string; phone: string; grade: "VIP" | "GOLD" | "MEMBER"; role: "admin" | "member"; marketing: boolean; advisor: string | null; createdAt: string; lastVisit: string }[];
 }
 
 /** 한국 시간 기준 YYYY-MM-DD */

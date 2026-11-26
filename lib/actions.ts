@@ -2,7 +2,8 @@
 
 import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { categories, grades, orderStatuses, productTags, swatches, type CategoryKey, type Grade, type OrderStatus, type ProductStatus } from "./data";
+import { categories, grades, type Role, orderStatuses, productTags, swatches, type CategoryKey, type Grade, type OrderStatus, type ProductStatus } from "./data";
+import { getAdmin } from "./queries";
 import { createClient } from "./supabase/server";
 
 // 서버 액션은 공개 엔드포인트입니다. 입력은 여기서 검증하고, 권한(관리자/본인)은 DB RLS 가 강제합니다.
@@ -107,6 +108,18 @@ export async function setMemberGrade(uid: string, grade: Grade): Promise<Result>
   if (!grades.includes(grade)) return { error: "잘못된 등급입니다" };
   const sb = await createClient();
   const { error } = await sb.from("profiles").update({ grade }).eq("id", uid);
+  if (error) return { error: error.message };
+  refresh();
+  return {};
+}
+
+export async function setMemberRole(uid: string, role: Role): Promise<Result> {
+  if (role !== "admin" && role !== "member") return { error: "잘못된 권한입니다" };
+  const { sb, user, admin } = await getAdmin();
+  if (!admin) return { error: "관리자만 변경할 수 있습니다" };
+  // 자기 권한을 스스로 해제하면 관리자 화면에 다시 들어올 수 없게 되므로 막음
+  if (uid === user?.id) return { error: "본인 권한은 변경할 수 없습니다" };
+  const { error } = await sb.from("profiles").update({ role }).eq("id", uid);
   if (error) return { error: error.message };
   refresh();
   return {};

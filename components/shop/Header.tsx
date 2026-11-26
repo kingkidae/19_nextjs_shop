@@ -13,6 +13,7 @@ const nav = [
   { label: "핸드백", href: "/products?c=women-bags" },
   { label: "주얼리 & 시계", href: "/products?c=jewelry" },
   { label: "기프트", href: "/products" },
+  { label: "문의하기", href: "/contact" },
 ];
 
 const drawerLinks = [
@@ -44,7 +45,7 @@ export function AnnouncementBar() {
 
 export function Header({ theme = "light" }: { theme?: "light" | "overlay" }) {
   const [open, setOpen] = useState(false);
-  const { count } = useCart();
+  const { count, isAdmin } = useCart();
   const overlay = theme === "overlay";
   const fg = overlay ? "text-canvas" : "text-ink";
 
@@ -126,7 +127,8 @@ export function Header({ theme = "light" }: { theme?: "light" | "overlay" }) {
           <div className="flex flex-col gap-3 border-t border-line px-5 py-6 lg:px-8">
             <Link href="/login" className="flex items-center gap-3 text-[13px]"><Icon name="user" size={20} />로그인 / 회원가입</Link>
             <Link href="/mypage" className="flex items-center gap-3 text-[13px]"><Icon name="calendar" size={20} />매장 방문 예약</Link>
-            <Link href="/admin" className="flex items-center gap-3 text-[13px] text-ink-2"><Icon name="settings" size={20} />관리자 페이지</Link>
+            <Link href="/contact" onClick={() => setOpen(false)} className="flex items-center gap-3 text-[13px]"><Icon name="chat" size={20} />문의하기</Link>
+            {isAdmin && <Link href="/admin" className="flex items-center gap-3 text-[13px] text-ink-2"><Icon name="settings" size={20} />관리자 페이지</Link>}
           </div>
         </aside>
       </div>

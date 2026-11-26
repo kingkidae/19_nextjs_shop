@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { safeNext } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, Field } from "@/components/ui/Field";
@@ -22,12 +23,24 @@ export function AuthForms() {
   const [pending, setPending] = useState(false);
   const router = useRouter();
 
+  const nextPath = () => safeNext(new URLSearchParams(location.search).get("next"), location.origin);
+
   const done = () => {
-    // 내부 경로만 허용 (오픈 리다이렉트 방지)
-    const next = new URL(new URLSearchParams(location.search).get("next") ?? "/mypage", location.origin);
-    // 경로 앞 슬래시를 하나로 합침: "/.//evil.com" 은 정규화 후 "//evil.com"(외부 주소)이 되기 때문
-    router.replace(next.origin === location.origin ? "/" + (next.pathname + next.search + next.hash).replace(/^[/\\]+/, "") : "/mypage");
+    router.replace(nextPath());
     router.refresh();
+  };
+
+  // Google 인증 후 /auth/callback 에서 세션을 만들고 원래 가려던 곳으로 이동
+  const google = async () => {
+    setPending(true);
+    const { error } = await createClient().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(nextPath())}` },
+    });
+    if (error) {
+      setPending(false);
+      setMsg({ login: error.message });
+    }
   };
 
   const login = async (e: FormEvent<HTMLFormElement>) => {
@@ -79,6 +92,7 @@ export function AuthForms() {
           <div className="flex items-center gap-4 text-[12px] text-ink-2">
             <span className="h-px flex-1 bg-line" />또는<span className="h-px flex-1 bg-line" />
           </div>
+          <Button type="button" variant="secondary" className="w-full normal-case" disabled={pending} onClick={google}>Google로 계속하기</Button>
           {["카카오로 계속하기", "네이버로 계속하기", "Apple로 계속하기"].map((s) => (
             <Button key={s} type="button" variant="secondary" className="w-full normal-case">{s}</Button>
           ))}

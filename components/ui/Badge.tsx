@@ -10,6 +10,8 @@ const tones: Record<string, string> = {
   VIP: "bg-ink text-canvas",
   GOLD: "bg-warning-bg text-warning",
   MEMBER: "bg-muted text-ink-2",
+  관리자: "bg-brand-green text-canvas",
+  "일반 회원": "bg-muted text-ink-2",
 };
 
 export function Badge({ label, className = "" }: { label: string; className?: string }) {

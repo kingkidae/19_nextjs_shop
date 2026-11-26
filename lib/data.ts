@@ -54,6 +54,10 @@ export interface Order {
 
 export type Grade = "VIP" | "GOLD" | "MEMBER";
 
+/** 권한: 관리자 / 일반 회원 (로그인하지 않은 사람은 방문자) */
+export type Role = "admin" | "member";
+export const roleLabel: Record<Role, string> = { admin: "관리자", member: "일반 회원" };
+
 export interface Member {
   uid: string;
   id: string;
@@ -61,6 +65,7 @@ export interface Member {
   email: string;
   phone: string;
   grade: Grade;
+  role: Role;
   joined: string;
   orders: number;
   totalSpent: number;
@@ -93,4 +98,12 @@ const kst = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "nu
 export function formatDate(iso: string, time = true) {
   const p = Object.fromEntries(kst.formatToParts(new Date(iso)).map((x) => [x.type, x.value]));
   return `${p.year}.${p.month}.${p.day}` + (time ? ` ${p.hour}:${p.minute}` : "");
+}
+
+/** 로그인 후 이동할 경로. 같은 사이트 경로만 허용 (오픈 리다이렉트 방지) */
+export function safeNext(raw: string | null, origin: string) {
+  const u = new URL(raw ?? "/mypage", origin);
+  if (u.origin !== origin) return "/mypage";
+  // 앞 슬래시를 하나로 합침: "/.//evil.com" 은 정규화 후 "//evil.com"(외부 주소)이 되기 때문
+  return "/" + (u.pathname + u.search + u.hash).replace(/^[/\\]+/, "");
 }

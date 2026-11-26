@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { cache } from "react";
 import { PRODUCT_COLS, type Product } from "./data";
 import { createAnonClient, createClient } from "./supabase/server";
 
@@ -12,8 +13,8 @@ export async function getCatalog(): Promise<Product[]> {
   return data as unknown as Product[];
 }
 
-/** 관리자 확인. 관리자가 아니면 admin 은 null */
-export async function getAdmin() {
+/** 관리자 확인. 관리자가 아니면 admin 은 null (한 요청 안에서는 한 번만 조회) */
+export const getAdmin = cache(async () => {
   const sb = await createClient();
   const {
     data: { user },
@@ -21,4 +22,4 @@ export async function getAdmin() {
   if (!user) return { sb, user: null, admin: null };
   const { data } = await sb.from("profiles").select("name, role").eq("id", user.id).single();
   return { sb, user, admin: data?.role === "admin" ? data : null };
-}
+});

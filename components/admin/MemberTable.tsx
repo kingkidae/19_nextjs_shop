@@ -1,16 +1,16 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { setMemberGrade } from "@/lib/actions";
+import { setMemberGrade, setMemberRole } from "@/lib/actions";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { formatKRW, type Grade, type Member, type Order } from "@/lib/data";
+import { formatKRW, roleLabel, type Grade, type Member, type Order } from "@/lib/data";
 import { PageHeader, StatCard } from "./AdminShell";
 
 const grades: ("전체" | Grade)[] = ["전체", "VIP", "GOLD", "MEMBER"];
 
-export function MemberTable({ members, orders, thisMonth }: { members: Member[]; orders: Order[]; thisMonth: string }) {
+export function MemberTable({ members, orders, thisMonth, meId }: { members: Member[]; orders: Order[]; thisMonth: string; meId?: string }) {
   const [grade, setGrade] = useState<(typeof grades)[number]>("전체");
   const [q, setQ] = useState("");
   const [activeId, setActiveId] = useState(members[0]?.uid);
@@ -61,6 +61,7 @@ export function MemberTable({ members, orders, thisMonth }: { members: Member[];
               <thead className="text-[11px] text-ink-2">
                 <tr className="border-b border-line">
                   <th className="px-5 py-3 font-medium lg:px-6">회원</th>
+                  <th className="py-3 font-medium">권한</th>
                   <th className="py-3 font-medium">등급</th>
                   <th className="py-3 font-medium">주문</th>
                   <th className="py-3 font-medium">누적 구매액</th>
@@ -80,6 +81,7 @@ export function MemberTable({ members, orders, thisMonth }: { members: Member[];
                         </div>
                       </div>
                     </td>
+                    <td className="py-3"><Badge label={roleLabel[m.role]} /></td>
                     <td className="py-3"><Badge label={m.grade} /></td>
                     <td className="num py-3">{m.orders}건</td>
                     <td className="num py-3">{formatKRW(m.totalSpent)}</td>
@@ -92,13 +94,13 @@ export function MemberTable({ members, orders, thisMonth }: { members: Member[];
             {rows.length === 0 && <p className="py-16 text-center text-[13px] text-ink-2">검색 결과가 없습니다.</p>}
           </div>
         </div>
-        {active && <MemberDetail member={active} orders={orders} />}
+        {active && <MemberDetail member={active} orders={orders} isMe={active.uid === meId} />}
       </div>
     </>
   );
 }
 
-function MemberDetail({ member, orders }: { member: Member; orders: Order[] }) {
+function MemberDetail({ member, orders, isMe }: { member: Member; orders: Order[]; isMe: boolean }) {
   const recent = orders.filter((o) => o.userId === member.uid).slice(0, 3);
   const [pending, start] = useTransition();
   return (
@@ -107,7 +109,10 @@ function MemberDetail({ member, orders }: { member: Member; orders: Order[] }) {
         <span className="grid size-16 place-items-center rounded-full bg-brand-green text-[22px] font-bold text-canvas">{(member.name || member.email)[0]}</span>
         <p className="mt-1 text-[16px] font-bold">{member.name || "-"}</p>
         <p className="num text-[12px] text-ink-2">{member.id} · {member.email}</p>
-        <Badge label={member.grade} />
+        <div className="flex gap-1.5">
+          <Badge label={roleLabel[member.role]} />
+          <Badge label={member.grade} />
+        </div>
       </div>
       <div className="grid grid-cols-2 border-b border-line">
         <div className="flex flex-col gap-1 border-r border-line px-5 py-4">
@@ -124,6 +129,29 @@ function MemberDetail({ member, orders }: { member: Member; orders: Order[] }) {
         <dt className="text-ink-2">가입일</dt><dd className="num">{member.joined}</dd>
         <dt className="text-ink-2">담당 어드바이저</dt><dd>{member.advisor ?? "미지정"}</dd>
         <dt className="text-ink-2">마케팅 수신</dt><dd>{member.marketing ? "동의" : "미동의"}</dd>
+        <dt className="text-ink-2">권한</dt>
+        <dd className="flex items-center justify-between gap-2">
+          {roleLabel[member.role]}
+          {isMe ? (
+            <span className="text-[11px] text-ink-3">본인</span>
+          ) : (
+            <button
+              type="button"
+              disabled={pending}
+              className="text-[12px] font-medium underline underline-offset-4 disabled:opacity-40"
+              onClick={() => {
+                const next = member.role === "admin" ? "member" : "admin";
+                if (!confirm(`${member.name || member.email} 님을 ${roleLabel[next]}(으)로 변경할까요?`)) return;
+                start(async () => {
+                  const res = await setMemberRole(member.uid, next);
+                  if (res.error) alert(res.error);
+                });
+              }}
+            >
+              {member.role === "admin" ? "관리자 해제" : "관리자로 지정"}
+            </button>
+          )}
+        </dd>
       </dl>
       <div className="px-6 py-4">
         <p className="mb-3 text-[12px] font-bold">최근 주문</p>

@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Product } from "@/lib/data";
+import { createClient } from "@/lib/supabase/client";
 
 export interface CartLine {
   productId: string;
@@ -10,6 +11,8 @@ export interface CartLine {
 }
 
 interface CartCtx {
+  /** 메뉴 표시용. 실제 권한 검사는 서버(RLS)에서 */
+  isAdmin: boolean;
   products: Product[];
   getProduct: (id: string) => Product | undefined;
   clear: () => void;
@@ -36,6 +39,23 @@ const SEED: CartLine[] = [
 export function CartProvider({ products, children }: { products: Product[]; children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>(SEED);
   const [wishlist, setWishlist] = useState<string[]>(["p016", "p014", "p018"]);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // 로그인·로그아웃 때마다 권한 다시 확인 (구독 시 현재 세션으로 한 번 호출됨)
+  useEffect(() => {
+    const sb = createClient();
+    const {
+      data: { subscription },
+    } = sb.auth.onAuthStateChange((_event, session) => {
+      if (!session) return setIsAdmin(false);
+      // 이 콜백 안에서 Supabase 를 바로 호출하면 교착될 수 있어 다음 틱에 조회
+      setTimeout(async () => {
+        const { data } = await sb.from("profiles").select("role").eq("id", session.user.id).single();
+        setIsAdmin(data?.role === "admin");
+      });
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   // localStorage 는 마운트 후에만 읽을 수 있음 (서버 렌더와 hydration 불일치 방지)
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -62,6 +82,7 @@ export function CartProvider({ products, children }: { products: Product[]; chil
       .map((l) => ({ ...l, product: getProduct(l.productId)! }))
       .filter((l) => l.product);
     return {
+      isAdmin,
       products,
       getProduct,
       clear: () => persist([]),
@@ -84,7 +105,7 @@ export function CartProvider({ products, children }: { products: Product[]; chil
         } catch {}
       },
     };
-  }, [products, lines, wishlist, persist]);
+  }, [isAdmin, products, lines, wishlist, persist]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

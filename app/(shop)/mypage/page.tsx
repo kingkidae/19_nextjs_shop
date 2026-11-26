@@ -46,7 +46,7 @@ async function Account() {
   if (!user) redirect("/login?next=/mypage");
 
   const [{ data: profile }, { data }] = await Promise.all([
-    sb.from("profiles").select("name, email, grade, advisor").eq("id", user.id).single(),
+    sb.from("profiles").select("name, email, grade, role, advisor").eq("id", user.id).single(),
     sb.from("orders").select(ORDER_COLS).eq("user_id", user.id).order("created_at", { ascending: false }),
   ]);
   const orders = (data ?? []) as unknown as Order[];
@@ -60,11 +60,16 @@ async function Account() {
           <p className="cta text-ink-2">My Account</p>
           <h1 className="text-[22px] font-bold tracking-[-0.01em] lg:text-[28px]">{profile?.name || profile?.email} 님, 안녕하세요</h1>
           <div className="flex flex-wrap items-center gap-2.5">
+            {profile?.role === "admin" && <Badge label="관리자" />}
             <Badge label={profile?.grade ?? "MEMBER"} />
             <span className="text-[13px] text-ink-2">{profile?.advisor ? `전담 어드바이저: ${profile.advisor} · 청담 플래그십` : "전담 어드바이저 미지정"}</span>
           </div>
         </div>
-        <ButtonLink href="#" variant="secondary" className="self-start lg:self-auto">등급 혜택 보기</ButtonLink>
+        {profile?.role === "admin" ? (
+          <ButtonLink href="/admin" variant="secondary" className="self-start lg:self-auto">관리자 페이지</ButtonLink>
+        ) : (
+          <ButtonLink href="#" variant="secondary" className="self-start lg:self-auto">등급 혜택 보기</ButtonLink>
+        )}
       </section>
 
       <div className="flex flex-col gap-10 px-5 pt-8 lg:flex-row lg:gap-14 lg:px-10 lg:pt-12">

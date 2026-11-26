@@ -12,6 +12,17 @@
    ```
 2. `npm install && npm run dev` → http://localhost:3000
 
+## 문의하기 메일 (nodemailer)
+
+`/contact` 에서 받은 문의(이름·전화번호·이메일·주소·내용)를 관리자 메일로 보냅니다. `.env` 에 추가:
+
+```
+SMTP_USER=보내는 Gmail 주소
+SMTP_PASS=Gmail 앱 비밀번호 16자리   # Google 계정 → 보안 → 2단계 인증 → 앱 비밀번호
+CONTACT_TO=문의를 받을 관리자 이메일   # 생략하면 SMTP_USER 로 받음
+# SMTP_HOST=smtp.gmail.com  SMTP_PORT=465  (기본값, 다른 메일 서비스일 때만 변경)
+```
+
 ## DB (supabase/migrations)
 
 | 파일 | 내용 |
@@ -24,11 +35,11 @@
 
 ## 관리자 계정
 
-`/login` 에서 회원가입한 뒤 Supabase SQL Editor 에서 한 번 실행합니다.
+권한은 **관리자 / 일반 회원** 두 가지이고, 로그인하지 않은 사람은 방문자입니다.
 
-```sql
-update public.profiles set role = 'admin' where email = '가입한 이메일';
-```
+- `public.admin_emails` 에 등록된 이메일로 가입(또는 Google 로그인)하고 이메일 인증까지 마치면 자동으로 관리자가 됩니다.
+- 그 외 가입자는 일반 회원입니다. 관리자는 `/admin/members` 에서 다른 회원을 관리자로 지정하거나 해제할 수 있습니다(본인 권한은 변경 불가).
+- 관리자 이메일 추가는 새 마이그레이션으로: `insert into public.admin_emails (email) values ('소문자 이메일');`
 
 ## 구조
 

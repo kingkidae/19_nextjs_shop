@@ -50,7 +50,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function AdminShell({ children }: { children: ReactNode }) {
+export function AdminShell({ children, profile }: { children: ReactNode; profile: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="min-h-dvh bg-admin-bg">
@@ -83,13 +83,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <span className="absolute right-0.5 top-0 size-2 rounded-full bg-brand-red" />
             </button>
             <button aria-label="설정" className="hidden sm:block"><Icon name="settings" /></button>
-            <div className="flex items-center gap-2.5">
-              <span className="grid size-8 place-items-center rounded-full bg-brand-green text-[12px] font-bold text-canvas">김</span>
-              <span className="hidden flex-col leading-tight sm:flex">
-                <span className="text-[13px] font-medium">김지원 매니저</span>
-                <span className="text-[11px] text-ink-2">Super Admin</span>
-              </span>
-            </div>
+            {profile}
           </div>
         </header>
         <main className="px-4 py-6 lg:px-8 lg:py-8">{children}</main>
