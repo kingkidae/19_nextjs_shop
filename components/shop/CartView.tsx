@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { placeOrder } from "@/lib/actions";
-import { Button, ButtonLink } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/Button";
 import { Checkbox, Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/Icon";
 import { ArtBox } from "@/components/ui/ProductArt";
@@ -12,21 +9,7 @@ import { formatKRW } from "@/lib/data";
 import { useCart } from "./CartProvider";
 
 export function CartView() {
-  const { lines, count, subtotal, setQty, remove, toggleWish, clear } = useCart();
-  const router = useRouter();
-  const [pending, start] = useTransition();
-
-  // 결제 연동(PG) 없이 주문만 생성. 금액·재고는 DB 에서 확정
-  const checkout = (pay: "신용카드" | "간편결제") =>
-    start(async () => {
-      const res = await placeOrder(lines.map(({ productId, color, qty }) => ({ productId, color, qty })), pay);
-      if (res.login) return router.push("/login?next=/cart");
-      if (res.error) return alert(res.error);
-      clear();
-      alert(`주문이 완료되었습니다.\n${res.orders?.join("\n")}`);
-      router.push("/mypage");
-      router.refresh();
-    });
+  const { lines, count, subtotal, setQty, remove, toggleWish } = useCart();
 
   if (lines.length === 0) {
     return (
@@ -97,8 +80,8 @@ export function CartView() {
           </div>
           <p className="text-[12px] text-ink-2">부가세 포함 · 최대 12개월 무이자 할부 가능</p>
           <Field label="프로모션 코드" placeholder="코드를 입력하세요" />
-          <Button className="h-[52px] w-full" disabled={pending} onClick={() => checkout("신용카드")}>{pending ? "주문 처리 중…" : "결제하기"}</Button>
-          <Button variant="secondary" className="h-[52px] w-full" disabled={pending} onClick={() => checkout("간편결제")}>간편결제로 결제하기</Button>
+          {/* 토스페이먼츠 결제 페이지로 이동 (로그인 필요) */}
+          <ButtonLink href="/checkout" className="h-[52px] w-full">주문하기</ButtonLink>
           <div className="flex flex-col gap-1 pt-2">
             <p className="text-[13px] font-medium">도움이 필요하신가요?</p>
             <p className="text-[12px] text-ink-2">클라이언트 서비스센터 02-0000-0000 · 실시간 채팅</p>

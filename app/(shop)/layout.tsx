@@ -1,5 +1,6 @@
 import { CartProvider } from "@/components/shop/CartProvider";
 import { Footer } from "@/components/shop/Footer";
+import { InquiryFab } from "@/components/shop/InquiryFab";
 import { MobileTabBar } from "@/components/shop/MobileTabBar";
 import { getCatalog } from "@/lib/queries";
 import { Suspense } from "react";
@@ -16,6 +17,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       {/* usePathname 은 동적 경로(/products/[id])에서 런타임 값이라 Suspense 필요 */}
       <Suspense>
         <MobileTabBar />
+        <InquiryFab />
       </Suspense>
     </CartProvider>
   );

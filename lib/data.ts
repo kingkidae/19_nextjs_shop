@@ -107,3 +107,16 @@ export function safeNext(raw: string | null, origin: string) {
   // 앞 슬래시를 하나로 합침: "/.//evil.com" 은 정규화 후 "//evil.com"(외부 주소)이 되기 때문
   return "/" + (u.pathname + u.search + u.hash).replace(/^[/\\]+/, "");
 }
+
+export interface InquiryRow {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  message: string;
+  done: boolean;
+  doneAt: string | null;
+  createdAt: string;
+}
+export const INQUIRY_COLS = "id,name,phone,email,address,message,done,doneAt:done_at,createdAt:created_at";

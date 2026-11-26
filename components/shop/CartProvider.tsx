@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Product } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,6 +11,8 @@ export interface CartLine {
 }
 
 interface CartCtx {
+  /** localStorage 의 장바구니를 읽어 온 뒤 true */
+  ready: boolean;
   /** 메뉴 표시용. 실제 권한 검사는 서버(RLS)에서 */
   isAdmin: boolean;
   products: Product[];
@@ -40,6 +42,7 @@ export function CartProvider({ products, children }: { products: Product[]; chil
   const [lines, setLines] = useState<CartLine[]>(SEED);
   const [wishlist, setWishlist] = useState<string[]>(["p016", "p014", "p018"]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [ready, setReady] = useState(false);
 
   // 로그인·로그아웃 때마다 권한 다시 확인 (구독 시 현재 세션으로 한 번 호출됨)
   useEffect(() => {
@@ -66,6 +69,7 @@ export function CartProvider({ products, children }: { products: Product[]; chil
       const wish = localStorage.getItem("vellanti-wish");
       if (wish) setWishlist(JSON.parse(wish));
     } catch {}
+    setReady(true);
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -82,6 +86,7 @@ export function CartProvider({ products, children }: { products: Product[]; chil
       .map((l) => ({ ...l, product: getProduct(l.productId)! }))
       .filter((l) => l.product);
     return {
+      ready,
       isAdmin,
       products,
       getProduct,
@@ -105,7 +110,7 @@ export function CartProvider({ products, children }: { products: Product[]; chil
         } catch {}
       },
     };
-  }, [isAdmin, products, lines, wishlist, persist]);
+  }, [ready, isAdmin, products, lines, wishlist, persist]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -118,4 +123,16 @@ export function useCart() {
 
 export function WishCount() {
   return <>{useCart().wishlist.length}</>;
+}
+
+/** 결제 완료 화면에서 한 번 쇼핑백 비우기 */
+export function ClearCart() {
+  const { ready, clear } = useCart();
+  const done = useRef(false);
+  useEffect(() => {
+    if (!ready || done.current) return;
+    done.current = true;
+    clear();
+  }, [ready, clear]);
+  return null;
 }

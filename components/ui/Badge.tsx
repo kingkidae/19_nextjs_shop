@@ -11,6 +11,8 @@ const tones: Record<string, string> = {
   GOLD: "bg-warning-bg text-warning",
   MEMBER: "bg-muted text-ink-2",
   관리자: "bg-brand-green text-canvas",
+  "상담 대기": "bg-warning-bg text-warning",
+  "상담 완료": "bg-success-bg text-success",
   "일반 회원": "bg-muted text-ink-2",
 };
 

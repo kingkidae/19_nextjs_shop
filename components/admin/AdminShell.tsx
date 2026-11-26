@@ -10,6 +10,7 @@ const menu: { href: string; label: string; icon: IconName; badge?: number }[] = 
   { href: "/admin/products", label: "상품 관리", icon: "box" },
   { href: "/admin/orders", label: "주문 관리", icon: "receipt", badge: 4 },
   { href: "/admin/members", label: "회원 관리", icon: "users" },
+  { href: "/admin/inquiries", label: "문의 관리", icon: "chat" },
   { href: "#", label: "예약 관리", icon: "calendar" },
   { href: "#", label: "프로모션", icon: "tag" },
   { href: "#", label: "설정", icon: "settings" },

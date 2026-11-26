@@ -10,18 +10,19 @@ import { createClient } from "./supabase/server";
 
 type Result = { error?: string };
 
-export async function placeOrder(lines: { productId: string; color: string; qty: number }[], pay: string): Promise<Result & { orders?: string[]; login?: boolean }> {
+export type Checkout = { id: string; amount: number; orderName: string };
+
+/** 결제 전 주문서 생성. 금액·재고 확인은 DB 함수 create_checkout 이 처리 (재고 차감은 결제 승인 후) */
+export async function createCheckout(lines: { productId: string; color: string; qty: number }[]): Promise<Result & { checkout?: Checkout; login?: boolean }> {
   const sb = await createClient();
   const {
     data: { user },
   } = await sb.auth.getUser();
   if (!user) return { login: true };
-  // 금액·재고 확인은 DB 함수 place_order 가 처리
   const items = lines.map((l) => ({ productId: String(l.productId), color: String(l.color), qty: Number(l.qty) }));
-  const { data, error } = await sb.rpc("place_order", { items, pay });
+  const { data, error } = await sb.rpc("create_checkout", { items });
   if (error) return { error: error.message };
-  updateTag("products");
-  return { orders: data as string[] };
+  return { checkout: data as Checkout };
 }
 
 const productStatuses: ProductStatus[] = ["판매중", "품절", "숨김"];
@@ -121,6 +122,16 @@ export async function setMemberRole(uid: string, role: Role): Promise<Result> {
   if (uid === user?.id) return { error: "본인 권한은 변경할 수 없습니다" };
   const { error } = await sb.from("profiles").update({ role }).eq("id", uid);
   if (error) return { error: error.message };
+  refresh();
+  return {};
+}
+
+export async function setInquiryDone(id: number, done: boolean): Promise<Result> {
+  if (!Number.isInteger(id)) return { error: "잘못된 문의입니다" };
+  const sb = await createClient();
+  const { data, error } = await sb.from("inquiries").update({ done: Boolean(done), done_at: done ? new Date().toISOString() : null }).eq("id", id).select("id");
+  if (error) return { error: error.message };
+  if (!data?.length) return { error: "변경 권한이 없습니다" };
   refresh();
   return {};
 }

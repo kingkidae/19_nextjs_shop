@@ -1,4 +1,4 @@
-import { ORDER_COLS, PRODUCT_COLS, type Order, type Product } from "./data";
+import { INQUIRY_COLS, ORDER_COLS, PRODUCT_COLS, type InquiryRow, type Order, type Product } from "./data";
 import { createClient } from "./supabase/server";
 
 // 관리자 화면용 조회 (세션 쿠키 + RLS: 관리자만 전체 행이 보임)
@@ -23,6 +23,12 @@ export async function adminProfiles() {
     .order("created_at");
   if (error) throw new Error(error.message);
   return data as unknown as { uid: string; id: string; name: string; email: string; phone: string; grade: "VIP" | "GOLD" | "MEMBER"; role: "admin" | "member"; marketing: boolean; advisor: string | null; createdAt: string; lastVisit: string }[];
+}
+
+export async function adminInquiries() {
+  const { data, error } = await (await createClient()).from("inquiries").select(INQUIRY_COLS).order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data as unknown as InquiryRow[];
 }
 
 /** 한국 시간 기준 YYYY-MM-DD */

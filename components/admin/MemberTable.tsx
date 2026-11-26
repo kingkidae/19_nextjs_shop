@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { setMemberGrade, setMemberRole } from "@/lib/actions";
+import { setMemberGrade } from "@/lib/actions";
+import { RoleToggle } from "./RoleToggle";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
@@ -132,25 +133,7 @@ function MemberDetail({ member, orders, isMe }: { member: Member; orders: Order[
         <dt className="text-ink-2">권한</dt>
         <dd className="flex items-center justify-between gap-2">
           {roleLabel[member.role]}
-          {isMe ? (
-            <span className="text-[11px] text-ink-3">본인</span>
-          ) : (
-            <button
-              type="button"
-              disabled={pending}
-              className="text-[12px] font-medium underline underline-offset-4 disabled:opacity-40"
-              onClick={() => {
-                const next = member.role === "admin" ? "member" : "admin";
-                if (!confirm(`${member.name || member.email} 님을 ${roleLabel[next]}(으)로 변경할까요?`)) return;
-                start(async () => {
-                  const res = await setMemberRole(member.uid, next);
-                  if (res.error) alert(res.error);
-                });
-              }}
-            >
-              {member.role === "admin" ? "관리자 해제" : "관리자로 지정"}
-            </button>
-          )}
+          <RoleToggle uid={member.uid} name={member.name || member.email} role={member.role} isMe={isMe} />
         </dd>
       </dl>
       <div className="px-6 py-4">

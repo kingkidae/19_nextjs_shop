@@ -23,6 +23,18 @@ CONTACT_TO=문의를 받을 관리자 이메일   # 생략하면 SMTP_USER 로 �
 # SMTP_HOST=smtp.gmail.com  SMTP_PORT=465  (기본값, 다른 메일 서비스일 때만 변경)
 ```
 
+## 결제 (토스페이먼츠 결제위젯, 테스트)
+
+쇼핑백 "주문하기" → `/checkout`(결제위젯) → 토스 인증 → `/checkout/success`(서버 승인) → `/checkout/complete`.
+금액은 DB 함수 `create_checkout` 이 계산하고, 승인 후 `complete_checkout`(서버 키 전용)이 재고 차감·주문 생성을 합니다.
+주문 확정이 실패하면(예: 재고 소진) 결제를 자동 취소합니다. `.env`:
+
+```
+TOSS_PAYMENTS_CLIENT_KEY=test_gck_...     # 결제위젯 클라이언트 키 (브라우저 노출 가능)
+TOSS_PAYMENTS_SECRET=test_gsk_...         # 결제위젯 시크릿 키 (서버 전용)
+SUPABASE_SECRET_KEY=sb_secret_...         # Supabase → Project Settings → API Keys → Secret key (서버 전용)
+```
+
 ## DB (supabase/migrations)
 
 | 파일 | 내용 |

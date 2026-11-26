@@ -43,6 +43,10 @@
   button {
     cursor: pointer;
   }
+  /* 모달(<dialog>)이 열려 있는 동안 뒤 페이지 스크롤 막기 */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
 }
 
 /* 대문자 볼드 12px CTA (Figma: Label/CTA) */

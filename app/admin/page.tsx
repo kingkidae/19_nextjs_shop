@@ -4,11 +4,17 @@ import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { ArtBox } from "@/components/ui/ProductArt";
-import { adminOrders, adminProducts, adminProfiles, kstDay } from "@/lib/admin-data";
-import { formatKRW, orderStatuses } from "@/lib/data";
+import { DoneCheck } from "@/components/admin/InquiryBoard";
+import { RoleToggle } from "@/components/admin/RoleToggle";
+import { adminInquiries, adminOrders, adminProducts, adminProfiles, kstDay } from "@/lib/admin-data";
+import { formatDate, formatKRW, orderStatuses, roleLabel } from "@/lib/data";
+import { getAdmin } from "@/lib/queries";
 
 export default async function AdminDashboard() {
-  const [orders, products, profiles] = await Promise.all([adminOrders(), adminProducts(), adminProfiles()]);
+  const [orders, products, profiles, inquiries, { user: me }] = await Promise.all([adminOrders(), adminProducts(), adminProfiles(), adminInquiries(), getAdmin()]);
+  const recentMembers = [...profiles].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 8);
+  const adminCount = profiles.filter((p) => p.role === "admin").length;
+  const waiting = inquiries.filter((i) => !i.done).length;
   const now = new Date();
   const today = kstDay(now);
   const days = Array.from({ length: 7 }, (_, i) => kstDay(new Date(now.getTime() - (6 - i) * 86400_000)));
@@ -127,6 +133,47 @@ export default async function AdminDashboard() {
           </Panel>
         </div>
       </div>
+
+      <Panel
+        className="mt-4"
+        title={`회원 · 전체 ${profiles.length}명 · 관리자 ${adminCount}명`}
+        action={<Link href="/admin/members" className="text-[12px] font-medium underline underline-offset-4">회원 관리</Link>}
+      >
+        <ul className="flex flex-col px-5 py-2 lg:px-6">
+          {recentMembers.map((m) => (
+            <li key={m.uid} className="flex items-center gap-3 border-b border-line py-3 last:border-0">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-[12px] font-bold">{(m.name || m.email)[0]}</span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-[13px] font-medium">{m.name || "-"}</span>
+                <span className="truncate text-[11px] text-ink-2">{m.email}</span>
+              </span>
+              <span className="num hidden shrink-0 text-[12px] text-ink-2 md:inline">{formatDate(m.createdAt, false)} 가입</span>
+              <span className="hidden shrink-0 sm:inline-flex"><Badge label={m.grade} /></span>
+              <Badge label={roleLabel[m.role]} />
+              <RoleToggle uid={m.uid} name={m.name || m.email} role={m.role} isMe={m.uid === me?.id} className="w-[84px] shrink-0 text-right" />
+            </li>
+          ))}
+        </ul>
+      </Panel>
+
+      <Panel
+        className="mt-4"
+        title={`최근 문의 · 상담 대기 ${waiting}건`}
+        action={<Link href="/admin/inquiries" className="text-[12px] font-medium underline underline-offset-4">전체 보기</Link>}
+      >
+        <ul className="flex flex-col px-5 py-2 lg:px-6">
+          {inquiries.slice(0, 5).map((i) => (
+            <li key={i.id} className="flex items-center gap-3 border-b border-line py-3 last:border-0">
+              <DoneCheck row={i} />
+              <span className="w-16 shrink-0 truncate text-[13px] font-medium sm:w-24">{i.name}</span>
+              <Link href="/admin/inquiries" className={`min-w-0 flex-1 truncate text-[13px] hover:underline ${i.done ? "text-ink-2" : ""}`}>{i.message}</Link>
+              <span className="num hidden shrink-0 text-[12px] text-ink-2 sm:inline">{formatDate(i.createdAt, false)}</span>
+              <Badge label={i.done ? "상담 완료" : "상담 대기"} />
+            </li>
+          ))}
+          {inquiries.length === 0 && <li className="py-4 text-[13px] text-ink-2">접수된 문의가 없습니다.</li>}
+        </ul>
+      </Panel>
     </>
   );
 }
